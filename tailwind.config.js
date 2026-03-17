@@ -1,0 +1,42 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+	// Сканируем все компоненты и экраны проекта
+	content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
+	presets: [require('nativewind/preset')],
+	theme: {
+		extend: {
+			colors: {
+				// ── Тёмная тема ──────────────────────────
+				'dark-bg': '#000000',
+				'dark-card': '#0a0a0a',
+				'dark-elevated': '#111111',
+				'dark-border': '#1f1f1f',
+				'dark-text': '#ededed',
+				'dark-muted': '#a1a1a1',
+
+				// ── Светлая тема ─────────────────────────
+				'light-bg': '#faf9f7',
+				'light-card': '#f2f0ed',
+				'light-elevated': '#ffffff',
+				'light-border': '#e2dfda',
+				'light-text': '#1a1a18',
+				'light-muted': '#6b6862',
+
+				// ── Акценты (общие) ───────────────────────
+				accent: '#0070f3',
+				'accent-hover': '#0060df',
+				success: '#22c55e',
+				'success-light': '#16a34a',
+				danger: '#ef4444',
+				'danger-light': '#dc2626'
+			},
+			fontFamily: {
+				sans: ['Inter_400Regular'],
+				medium: ['Inter_500Medium'],
+				semibold: ['Inter_600SemiBold'],
+				bold: ['Inter_700Bold']
+			}
+		}
+	},
+	plugins: []
+}
