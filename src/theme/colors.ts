@@ -1,6 +1,20 @@
 // Цветовая палитра приложения (Vercel / Next.js стиль)
 
-export const darkColors = {
+// ── Общий тип для обеих тем ───────────────────────────────────────────────────
+export type ThemeColors = {
+	bgPrimary: string
+	bgSecondary: string
+	bgElevated: string
+	border: string
+	textPrimary: string
+	textSecondary: string
+	accent: string
+	accentHover: string
+	success: string
+	danger: string
+}
+
+export const darkColors: ThemeColors = {
 	bgPrimary: '#000000',
 	bgSecondary: '#0a0a0a',
 	bgElevated: '#111111',
@@ -11,9 +25,9 @@ export const darkColors = {
 	accentHover: '#0060df',
 	success: '#22c55e',
 	danger: '#ef4444'
-} as const
+}
 
-export const lightColors = {
+export const lightColors: ThemeColors = {
 	bgPrimary: '#faf9f7',
 	bgSecondary: '#f2f0ed',
 	bgElevated: '#ffffff',
@@ -24,9 +38,7 @@ export const lightColors = {
 	accentHover: '#0060df',
 	success: '#16a34a',
 	danger: '#dc2626'
-} as const
-
-export type ThemeColors = typeof darkColors
+}
 
 // Токены типографики
 export const typography = {

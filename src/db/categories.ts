@@ -1,8 +1,8 @@
 import { Category, TransactionType } from '@/types/index.type'
 import { db } from './schema'
 
-// ── Маппинг строки из БД в тип Category ──────────────────────────────────────
-const mapCategory = (row: {
+// ── Тип строки из БД (snake_case как в SQLite) ────────────────────────────────
+type DBCategoryRow = {
 	id: number
 	name: string
 	type: string
@@ -10,7 +10,10 @@ const mapCategory = (row: {
 	color: string
 	is_default: number
 	created_at: string
-}): Category => ({
+}
+
+// ── Маппинг строки из БД в тип Category ──────────────────────────────────────
+const mapCategory = (row: DBCategoryRow): Category => ({
 	id: row.id,
 	name: row.name,
 	type: row.type as TransactionType,
@@ -22,17 +25,15 @@ const mapCategory = (row: {
 
 // ── Получить все категории ────────────────────────────────────────────────────
 export const getAllCategories = (): Category[] => {
-	const rows = db.getAllSync<
-		ReturnType<typeof mapCategory> & {
-			is_default: number
-		}
-	>(`SELECT * FROM categories ORDER BY is_default DESC, name ASC`)
+	const rows = db.getAllSync<DBCategoryRow>(
+		`SELECT * FROM categories ORDER BY is_default DESC, name ASC`
+	)
 	return rows.map(mapCategory)
 }
 
 // ── Получить категории по типу ────────────────────────────────────────────────
 export const getCategoriesByType = (type: TransactionType): Category[] => {
-	const rows = db.getAllSync<Parameters<typeof mapCategory>[0]>(
+	const rows = db.getAllSync<DBCategoryRow>(
 		`SELECT * FROM categories
      WHERE type = ?
      ORDER BY is_default DESC, name ASC`,
