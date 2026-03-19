@@ -201,7 +201,7 @@ export default function DashboardScreen() {
 							<Text
 								size="3xl"
 								weight="bold"
-								style={{ color: balanceColor, marginTop: 4 }}
+								style={{ marginTop: 4 }}
 							>
 								{monthTotals.balance >= 0 ? '+' : '-'}
 								{Math.abs(monthTotals.balance).toLocaleString('ru-RU')} {symbol}
