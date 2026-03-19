@@ -1,12 +1,12 @@
 import { initDatabase } from '@/db/schema'
 import { seedDefaultCategories } from '@/db/seeds'
 import {
-	Inter_400Regular,
-	Inter_500Medium,
-	Inter_600SemiBold,
-	Inter_700Bold,
+	Geist_400Regular,
+	Geist_500Medium,
+	Geist_600SemiBold,
+	Geist_700Bold,
 	useFonts
-} from '@expo-google-fonts/inter'
+} from '@expo-google-fonts/geist'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
@@ -32,10 +32,10 @@ export default function RootLayout() {
 	const [showSplash, setShowSplash] = useState(true)
 
 	const [fontsLoaded] = useFonts({
-		Inter_400Regular,
-		Inter_500Medium,
-		Inter_600SemiBold,
-		Inter_700Bold
+		Geist_400Regular,
+		Geist_500Medium,
+		Geist_600SemiBold,
+		Geist_700Bold
 	})
 
 	// ── Инициализация БД ──────────────────────────────────────────────────────

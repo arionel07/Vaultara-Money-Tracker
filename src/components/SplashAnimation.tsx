@@ -221,14 +221,14 @@ const styles = StyleSheet.create({
 	},
 	letter: {
 		fontSize: 30,
-		fontFamily: 'Inter_700Bold',
+		fontFamily: 'Geist_700Bold',
 		color: '#ededed',
 		letterSpacing: 7
 	},
 	subtitle: {
 		marginTop: 14,
 		fontSize: 12,
-		fontFamily: 'Inter_400Regular',
+		fontFamily: 'Geist_400Regular',
 		color: '#a1a1a1',
 		letterSpacing: 5,
 		textTransform: 'uppercase'

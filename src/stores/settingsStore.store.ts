@@ -7,7 +7,7 @@ const SETTINGS_KEY = 'app_settings'
 
 // ── Значения по умолчанию ─────────────────────────────────────────────────────
 const DEFAULT_SETTINGS: AppSettings = {
-	theme: 'dark',
+	theme: 'system',
 	defaultCurrency: 'MDL',
 	biometricEnabled: false
 }

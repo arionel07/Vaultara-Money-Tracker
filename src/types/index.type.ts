@@ -7,7 +7,7 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
 	USD: '$',
 	EUR: '€',
 	TRY: '₺',
-	MDL: 'l'
+	MDL: 'L'
 }
 
 export const CURRENCY_LABELS: Record<Currency, string> = {

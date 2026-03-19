@@ -25,10 +25,10 @@ module.exports = {
 				'danger-light': '#dc2626'
 			},
 			fontFamily: {
-				sans: ['Inter_400Regular'],
-				medium: ['Inter_500Medium'],
-				semibold: ['Inter_600SemiBold'],
-				bold: ['Inter_700Bold']
+				sans: ['Geist_400Regular'],
+				medium: ['Geist_500Medium'],
+				semibold: ['Geist_600SemiBold'],
+				bold: ['Geist_700Bold']
 			}
 		}
 	},
