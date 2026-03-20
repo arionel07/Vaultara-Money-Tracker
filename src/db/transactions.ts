@@ -200,3 +200,37 @@ export const getMonthlyChartData = (
 	// Возвращаем в хронологическом порядке (от старых к новым)
 	return rows.reverse()
 }
+
+// ── Суммы по валютам за месяц ─────────────────────────────────────────────
+export const getMonthTotalsByCurrency = (
+	year: number,
+	month: number
+): Array<{
+	currency: Currency
+	totalIncome: number
+	totalExpense: number
+}> => {
+	const prefix = `${year}-${String(month).padStart(2, '0')}`
+
+	const rows = db.getAllSync<{
+		currency: string
+		total_income: number
+		total_expense: number
+	}>(
+		`SELECT
+       currency,
+       COALESCE(SUM(CASE WHEN type = 'income'  THEN amount ELSE 0 END), 0) AS total_income,
+       COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS total_expense
+     FROM transactions
+     WHERE date LIKE ?
+     GROUP BY currency
+     ORDER BY total_expense DESC`,
+		[`${prefix}%`]
+	)
+
+	return rows.map(r => ({
+		currency: r.currency as Currency,
+		totalIncome: r.total_income,
+		totalExpense: r.total_expense
+	}))
+}

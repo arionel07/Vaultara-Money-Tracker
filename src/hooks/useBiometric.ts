@@ -28,6 +28,7 @@ export const useBiometric = (): UseBiometricResult => {
 			try {
 				const compatible = await LocalAuthentication.hasHardwareAsync()
 				const enrolled = await LocalAuthentication.isEnrolledAsync()
+
 				const supported = compatible && enrolled
 
 				setIsSupported(supported)

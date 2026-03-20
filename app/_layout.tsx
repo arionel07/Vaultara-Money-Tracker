@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 
+import { BiometricGate } from '@/components/BiometricGate'
 import { SplashAnimation } from '@/components/SplashAnimation'
 import { useTheme } from '@/hooks/useTheme.hook'
 import { useCategoryStore } from '@/stores/categoryStore.store'
@@ -25,6 +26,7 @@ SplashScreen.preventAutoHideAsync()
 export default function RootLayout() {
 	const loadSettings = useSettingsStore(s => s.loadSettings)
 	const isLoaded = useSettingsStore(s => s.isLoaded)
+	const biometricEnabled = useSettingsStore(s => s.biometricEnabled)
 	const loadCategories = useCategoryStore(s => s.loadCategories)
 	const { colors, isDark } = useTheme()
 
@@ -56,14 +58,12 @@ export default function RootLayout() {
 	// Пока шрифты / настройки не загружены — ничего не рендерим
 	if (!fontsLoaded || !isLoaded) return null
 
-	return (
+	const content = (
 		<View
 			style={{ flex: 1, backgroundColor: colors.bgPrimary }}
 			onLayout={onLayoutRootView}
 		>
 			<StatusBar style={isDark ? 'light' : 'dark'} />
-
-			{/* ── Основная навигация ─────────────────────────────────────────────── */}
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Screen name="(tabs)" />
 				<Stack.Screen
@@ -80,8 +80,10 @@ export default function RootLayout() {
 				/>
 			</Stack>
 
-			{/* ── Анимированный сплэш поверх всего ──────────────────────────────── */}
 			{showSplash && <SplashAnimation onFinish={() => setShowSplash(false)} />}
 		</View>
 	)
+
+	// ── Оборачиваем в BiometricGate только если биометрия включена ────────────
+	return biometricEnabled ? <BiometricGate>{content}</BiometricGate> : content
 }

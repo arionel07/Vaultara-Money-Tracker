@@ -8,7 +8,12 @@ const TAB_CONFIG = [
 	{ name: 'index', title: 'Главная', icon: 'home' },
 	{ name: 'transactions', title: 'Транзакции', icon: 'list' },
 	{ name: 'budget', title: 'Бюджет', icon: 'pie-chart' },
-	{ name: 'stats', title: 'Статистика', icon: 'bar-chart' }
+	{ name: 'stats', title: 'Статистика', icon: 'bar-chart' },
+	{
+		name: 'settings',
+		title: 'Настройки',
+		icon: 'settings'
+	}
 ] as const
 
 type TabIconName = (typeof TAB_CONFIG)[number]['icon']

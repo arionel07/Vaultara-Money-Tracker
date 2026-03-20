@@ -20,6 +20,12 @@ interface MonthTotals {
 	totalIncome: number
 	totalExpense: number
 	balance: number
+	// Суммы по каждой валюте
+	byCurrency: Array<{
+		currency: Currency
+		totalIncome: number
+		totalExpense: number
+	}>
 }
 
 interface TransactionState {
