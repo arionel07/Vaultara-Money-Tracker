@@ -7,8 +7,8 @@ import { useSettingsStore } from '@/stores/settingsStore.store'
 import { useTransactionStore } from '@/stores/transactionStore.store'
 import { CURRENCY_SYMBOLS } from '@/types/index.type'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
-import { useCallback, useEffect, useMemo } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useMemo } from 'react'
 import {
 	RefreshControl,
 	ScrollView,
@@ -40,10 +40,12 @@ export default function DashboardScreen() {
 	const symbol = CURRENCY_SYMBOLS[defaultCurrency]
 
 	// ── Загрузка данных ───────────────────────────────────────────────────────
-	useEffect(() => {
-		loadMonthTotals()
-		loadRecentTransactions()
-	}, [selectedYear, selectedMonth])
+	useFocusEffect(
+		useCallback(() => {
+			loadMonthTotals()
+			loadRecentTransactions()
+		}, [selectedYear, selectedMonth])
+	)
 
 	const onRefresh = useCallback(() => {
 		loadMonthTotals()

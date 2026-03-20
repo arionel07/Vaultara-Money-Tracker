@@ -7,8 +7,8 @@ import { useSettingsStore } from '@/stores/settingsStore.store'
 import { useTransactionStore } from '@/stores/transactionStore.store'
 import { Budget, CURRENCY_SYMBOLS } from '@/types/index.type'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
-import { useCallback, useEffect, useMemo } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useMemo } from 'react'
 import {
 	Alert,
 	RefreshControl,
@@ -33,9 +33,11 @@ export default function BudgetScreen() {
 	const symbol = CURRENCY_SYMBOLS[defaultCurrency]
 
 	// ── Загрузка бюджетов ─────────────────────────────────────────────────────
-	useEffect(() => {
-		loadBudgets(selectedYear, selectedMonth)
-	}, [selectedYear, selectedMonth])
+	useFocusEffect(
+		useCallback(() => {
+			loadBudgets(selectedYear, selectedMonth)
+		}, [selectedYear, selectedMonth])
+	)
 
 	const onRefresh = useCallback(() => {
 		loadBudgets(selectedYear, selectedMonth)

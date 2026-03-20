@@ -7,8 +7,8 @@ import { useSettingsStore } from '@/stores/settingsStore.store'
 import { useTransactionStore } from '@/stores/transactionStore.store'
 import { CURRENCY_SYMBOLS, TransactionType } from '@/types/index.type'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { router, useFocusEffect } from 'expo-router'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
 	Alert,
 	RefreshControl,
@@ -54,13 +54,12 @@ export default function TransactionsScreen() {
 
 	// ── Загрузка данных ───────────────────────────────────────────────────────
 
-	useEffect(() => {
-		loadTransactions()
-	}, [filter, selectedYear, selectedMonth])
-
-	useEffect(() => {
-		loadMonthTotals()
-	}, [selectedYear, selectedMonth])
+	useFocusEffect(
+		useCallback(() => {
+			loadTransactions()
+			loadMonthTotals()
+		}, [selectedYear, selectedMonth, filter])
+	)
 
 	const onRefresh = useCallback(() => {
 		loadTransactions()
