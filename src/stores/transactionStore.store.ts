@@ -20,12 +20,6 @@ interface MonthTotals {
 	totalIncome: number
 	totalExpense: number
 	balance: number
-	// Суммы по каждой валюте
-	byCurrency: Array<{
-		currency: Currency
-		totalIncome: number
-		totalExpense: number
-	}>
 }
 
 interface TransactionState {
@@ -81,6 +75,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
 		totalExpense: 0,
 		balance: 0
 	},
+
 	categoryStats: [],
 	monthlyChartData: [],
 	selectedYear: now.getFullYear(),

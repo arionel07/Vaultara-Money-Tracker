@@ -135,60 +135,6 @@ export default function DashboardScreen() {
 					onNext={goToNextMonth}
 				/>
 
-				{/* ── Карточки сводки ────────────────────────────────────────────── */}
-				<View style={styles.summaryGrid}>
-					{/* Доходы */}
-					<Card style={styles.summaryCard}>
-						<View style={styles.summaryIcon}>
-							<Ionicons
-								name="arrow-down-circle-outline"
-								size={18}
-								color={colors.success}
-							/>
-						</View>
-
-						<Text
-							size="xs"
-							variant="secondary"
-							weight="medium"
-						>
-							Доходы
-						</Text>
-						<Text
-							size="xl"
-							weight="bold"
-							style={{ color: colors.success, marginTop: 4 }}
-						>
-							{monthTotals.totalIncome.toLocaleString('ru-RU')} {symbol}
-						</Text>
-					</Card>
-
-					{/* Расходы */}
-					<Card style={styles.summaryCard}>
-						<View style={styles.summaryIcon}>
-							<Ionicons
-								name="arrow-up-circle-outline"
-								size={18}
-								color={colors.danger}
-							/>
-						</View>
-
-						<Text
-							size="xs"
-							variant="secondary"
-							weight="medium"
-						>
-							Расходы
-						</Text>
-						<Text
-							size="xl"
-							weight="bold"
-							style={{ color: colors.danger, marginTop: 4 }}
-						>
-							{monthTotals.totalExpense.toLocaleString('ru-RU')} {symbol}
-						</Text>
-					</Card>
-				</View>
 				{/* ── Баланс ─────────────────────────────────────────────────────── */}
 				<Card style={{ marginTop: 12 }}>
 					<View style={styles.balanceRow}>
@@ -203,14 +149,14 @@ export default function DashboardScreen() {
 							<Text
 								size="3xl"
 								weight="bold"
-								style={{ marginTop: 4 }}
+								style={{ color: balanceColor, marginTop: 4 }}
 							>
-								{monthTotals.balance >= 0 ? '+' : '-'}
-								{Math.abs(monthTotals.balance).toLocaleString('ru-RU')} {symbol}
+								{monthTotals.balance >= 0 ? '+' : '−'}
+								{symbol}
+								{Math.abs(monthTotals.balance).toLocaleString('ru-RU')}
 							</Text>
 						</View>
 
-						{/* Процент */}
 						<View
 							style={[
 								styles.percentBadge,
@@ -236,7 +182,6 @@ export default function DashboardScreen() {
 						</View>
 					</View>
 
-					{/* Прогресс-бар баланса */}
 					<View
 						style={[styles.progressTrack, { backgroundColor: colors.border }]}
 					>
@@ -256,6 +201,59 @@ export default function DashboardScreen() {
 						/>
 					</View>
 				</Card>
+
+				{/* ── Карточки сводки ────────────────────────────────────────────── */}
+				<View style={styles.summaryGrid}>
+					<Card style={styles.summaryCard}>
+						<View style={styles.summaryIcon}>
+							<Ionicons
+								name="arrow-down-circle-outline"
+								size={18}
+								color={colors.success}
+							/>
+						</View>
+						<Text
+							size="xs"
+							variant="secondary"
+							weight="medium"
+						>
+							Доходы
+						</Text>
+						<Text
+							size="xl"
+							weight="bold"
+							style={{ color: colors.success, marginTop: 4 }}
+						>
+							{symbol}
+							{monthTotals.totalIncome.toLocaleString('ru-RU')}
+						</Text>
+					</Card>
+
+					<Card style={styles.summaryCard}>
+						<View style={styles.summaryIcon}>
+							<Ionicons
+								name="arrow-up-circle-outline"
+								size={18}
+								color={colors.danger}
+							/>
+						</View>
+						<Text
+							size="xs"
+							variant="secondary"
+							weight="medium"
+						>
+							Расходы
+						</Text>
+						<Text
+							size="xl"
+							weight="bold"
+							style={{ color: colors.danger, marginTop: 4 }}
+						>
+							{symbol}
+							{monthTotals.totalExpense.toLocaleString('ru-RU')}
+						</Text>
+					</Card>
+				</View>
 
 				{/* ── Последние транзакции ───────────────────────────────────────── */}
 				<View style={styles.sectionHeader}>

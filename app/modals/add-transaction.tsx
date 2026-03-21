@@ -14,7 +14,6 @@ import {
 } from '@/types/index.type'
 import { Ionicons } from '@expo/vector-icons'
 import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
 import { router } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
@@ -42,37 +41,63 @@ export default function AddTransactionModal() {
 	const incomeCategories = useCategoryStore(s => s.incomeCategories)
 	const loadCategories = useCategoryStore(s => s.loadCategories)
 
-	// ── Локальный стейт формы ─────────────────────────────────────────────────
+	// ── Форма ─────────────────────────────────────────────────────────────────
 	const [type, setType] = useState<TransactionType>('expense')
 	const [amount, setAmount] = useState('')
-	const [currency, setCurrency] = useState<Currency>(defaultCurrency)
 	const [categoryId, setCategoryId] = useState<number | null>(null)
 	const [note, setNote] = useState('')
 	const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
 
+	// ── Калькулятор курса ─────────────────────────────────────────────────────
+	const [showCalc, setShowCalc] = useState(false)
+	const [calcCurrency, setCalcCurrency] = useState<Currency>('RUB')
+	const [calcAmount, setCalcAmount] = useState('')
+	const [calcRate, setCalcRate] = useState('')
+	const [calcOp, setCalcOp] = useState<'multiply' | 'divide'>('divide')
+	const [showCalcCurrencies, setShowCalcCurrencies] = useState(false)
+
+	// ── Результат калькулятора ────────────────────────────────────────────────
+	const calcResult = useMemo(() => {
+		const a = parseFloat(calcAmount.replace(',', '.'))
+		const r = parseFloat(calcRate.replace(',', '.'))
+		if (isNaN(a) || isNaN(r) || r === 0) return null
+		const result = calcOp === 'multiply' ? a * r : a / r
+		return Math.round(result * 100) / 100
+	}, [calcAmount, calcRate, calcOp])
+
+	// ── Применить результат калькулятора ──────────────────────────────────────
+	const applyCalcResult = useCallback(() => {
+		if (calcResult === null) return
+		setAmount(String(calcResult))
+		setShowCalc(false)
+		setCalcAmount('')
+		setCalcRate('')
+	}, [calcResult])
+
 	// ── Панели выбора ─────────────────────────────────────────────────────────
 	const [showCurrencies, setShowCurrencies] = useState(false)
 
-	// ── Категории по типу ─────────────────────────────────────────────────────
+	// ── Категории по типу ────────────────────────────────────────────────────
+
+	// Сбрасываем категорию при смене типа
+
 	const categories = useMemo(
 		() => (type === 'expense' ? expenseCategories : incomeCategories),
 		[type, expenseCategories, incomeCategories]
 	)
 
-	// Сбрасываем категорию при смене типа
-
-	useEffect(() => setCategoryId(categories[0].id ?? null), [type, categories])
 	useEffect(() => {
 		loadCategories()
 	}, [])
+	useEffect(() => {
+		setCategoryId(categories[0]?.id ?? null)
+	}, [type, categories])
 
-	// ── Валидация ─────────────────────────────────────────────────────────────
 	const isValid = useMemo(() => {
 		const num = parseFloat(amount)
 		return !isNaN(num) && num > 0 && categoryId !== null
 	}, [amount, categoryId])
 
-	// ── Сохранение транзакции ─────────────────────────────────────────────────
 	const handleSave = useCallback(() => {
 		const num = parseFloat(amount)
 		if (isNaN(num) || num <= 0) {
@@ -83,24 +108,27 @@ export default function AddTransactionModal() {
 			Alert.alert('Ошибка', 'Выберите категорию')
 			return
 		}
-
 		addTransaction({
 			type,
 			amount: num,
-			currency,
+			currency: defaultCurrency,
 			categoryId,
 			note: note.trim() || undefined,
 			date
 		})
-
 		router.dismiss()
-	}, [amount, type, currency, categoryId, note, date, addTransaction])
+	}, [amount, type, defaultCurrency, categoryId, note, date, addTransaction])
 
-	// ── Форматирование суммы при вводе ────────────────────────────────────────
 	const handleAmountChange = useCallback((text: string) => {
-		// Заменяем запятую на точку сразу при вводе
-		const cleaned = text.replace(',', '.').replace(/[^0-9.]/g, '')
-		setAmount(cleaned)
+		setAmount(text.replace(',', '.').replace(/[^0-9.]/g, ''))
+	}, [])
+
+	const handleCalcAmountChange = useCallback((text: string) => {
+		setCalcAmount(text.replace(',', '.').replace(/[^0-9.]/g, ''))
+	}, [])
+
+	const handleCalcRateChange = useCallback((text: string) => {
+		setCalcRate(text.replace(',', '.').replace(/[^0-9.]/g, ''))
 	}, [])
 
 	return (
@@ -108,8 +136,7 @@ export default function AddTransactionModal() {
 			style={[styles.root, { backgroundColor: colors.bgPrimary }]}
 			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
 		>
-			{/* ── Шапка модала ─────────────────────────────────────────────────── */}
-
+			{/* ── Шапка ────────────────────────────────────────────────────────── */}
 			<View
 				style={[
 					styles.header,
@@ -155,88 +182,114 @@ export default function AddTransactionModal() {
 				keyboardShouldPersistTaps="handled"
 				showsVerticalScrollIndicator={false}
 			>
-				{/* ── Тип транзакции ────────────────────────────────────────────── */}
+				{/* ── Тип транзакции ─────────────────────────────────────────────── */}
 				<View style={styles.typeRow}>
-					{/* Кнопка выбора валюты */}
-					<TouchableOpacity
-						onPress={() => setType('expense')}
-						activeOpacity={0.8}
-						style={[
-							styles.typeBtn,
-							{
-								backgroundColor:
-									type === 'expense' ? colors.danger + '22' : colors.bgElevated,
-								borderColor: type === 'expense' ? colors.danger : colors.border
-							}
-						]}
-					>
-						<Ionicons
-							name="arrow-up-circle-outline"
-							size={18}
-							color={type === 'expense' ? colors.danger : colors.textSecondary}
-						/>
-						<Text
-							size="sm"
-							weight="semibold"
-							style={{
-								color:
-									type === 'expense' ? colors.danger : colors.textSecondary,
-								marginLeft: 6
-							}}
+					{(['expense', 'income'] as TransactionType[]).map(t => (
+						<TouchableOpacity
+							key={t}
+							onPress={() => setType(t)}
+							activeOpacity={0.8}
+							style={[
+								styles.typeBtn,
+								{
+									backgroundColor:
+										type === t
+											? (t === 'expense' ? colors.danger : colors.success) +
+												'22'
+											: colors.bgElevated,
+									borderColor:
+										type === t
+											? t === 'expense'
+												? colors.danger
+												: colors.success
+											: colors.border
+								}
+							]}
 						>
-							Расход
-						</Text>
-					</TouchableOpacity>
-
-					<TouchableOpacity
-						onPress={() => setType('income')}
-						activeOpacity={0.8}
-						style={[
-							styles.typeBtn,
-							{
-								backgroundColor:
-									type === 'income' ? colors.success + '22' : colors.bgElevated,
-								borderColor: type === 'income' ? colors.success : colors.border
-							}
-						]}
-					>
-						<Ionicons
-							name="arrow-down-circle-outline"
-							size={18}
-							color={type === 'income' ? colors.success : colors.textSecondary}
-						/>
-						<Text
-							size="sm"
-							weight="semibold"
-							style={{
-								color:
-									type === 'income' ? colors.success : colors.textSecondary,
-								marginLeft: 6
-							}}
-						>
-							Доход
-						</Text>
-					</TouchableOpacity>
+							<Ionicons
+								name={
+									t === 'expense'
+										? 'arrow-up-circle-outline'
+										: 'arrow-down-circle-outline'
+								}
+								size={18}
+								color={
+									type === t
+										? t === 'expense'
+											? colors.danger
+											: colors.success
+										: colors.textSecondary
+								}
+							/>
+							<Text
+								size="sm"
+								weight="semibold"
+								style={{
+									marginLeft: 6,
+									color:
+										type === t
+											? t === 'expense'
+												? colors.danger
+												: colors.success
+											: colors.textSecondary
+								}}
+							>
+								{t === 'expense' ? 'Расход' : 'Доход'}
+							</Text>
+						</TouchableOpacity>
+					))}
 				</View>
 
-				{/* ── Сумма + валюта ────────────────────────────────────────────── */}
+				{/* ── Сумма ──────────────────────────────────────────────────────── */}
 				<Card
 					elevated
-					style={styles.amountCard}
+					style={{ gap: 10 }}
 				>
-					<Text
-						size="xs"
-						variant="secondary"
-						weight="medium"
-					>
-						СУММА
-					</Text>
-					<View style={styles.amountRow}>
+					<View style={styles.amountHeader}>
+						<Text
+							size="xs"
+							variant="secondary"
+							weight="medium"
+						>
+							СУММА
+						</Text>
+						{/* Кнопка калькулятора курса */}
 						<TouchableOpacity
-							onPress={() => setShowCurrencies(v => !v)}
+							onPress={() => setShowCalc(v => !v)}
 							activeOpacity={0.7}
 							style={[
-								styles.currencyBtn,
+								styles.calcToggle,
+								{
+									backgroundColor: showCalc
+										? colors.accent + '22'
+										: colors.bgSecondary,
+									borderColor: showCalc ? colors.accent : colors.border
+								}
+							]}
+						>
+							<Ionicons
+								name="calculator-outline"
+								size={14}
+								color={showCalc ? colors.accent : colors.textSecondary}
+							/>
+							<Text
+								size="xs"
+								weight="medium"
+								style={{
+									color: showCalc ? colors.accent : colors.textSecondary,
+									marginLeft: 4
+								}}
+							>
+								Курс
+							</Text>
+						</TouchableOpacity>
+					</View>
+
+					{/* Поле суммы в основной валюте */}
+					<View style={styles.amountRow}>
+						<View
+							style={[
+								styles.currencyBadge,
 								{
 									backgroundColor: colors.bgSecondary,
 									borderColor: colors.border
@@ -247,17 +300,9 @@ export default function AddTransactionModal() {
 								size="lg"
 								weight="bold"
 							>
-								{CURRENCY_SYMBOLS[currency]}
+								{CURRENCY_SYMBOLS[defaultCurrency]}
 							</Text>
-							<Ionicons
-								name={showCurrencies ? 'chevron-up' : 'chevron-down'}
-								size={14}
-								color={colors.textSecondary}
-								style={{ marginLeft: 4 }}
-							/>
-						</TouchableOpacity>
-
-						{/* Поле суммы */}
+						</View>
 						<Input
 							value={amount}
 							onChangeText={handleAmountChange}
@@ -267,68 +312,207 @@ export default function AddTransactionModal() {
 						/>
 					</View>
 
-					{/* Список валют */}
-					{showCurrencies && (
+					{/* ── Мини-калькулятор курса ──────────────────────────────────── */}
+					{showCalc && (
 						<View
 							style={[
-								styles.currencyList,
+								styles.calcBox,
 								{
 									backgroundColor: colors.bgSecondary,
 									borderColor: colors.border
 								}
 							]}
 						>
-							{CURRENCIES.map(c => (
-								<TouchableOpacity
-									key={c}
-									onPress={() => {
-										setCurrency(c)
-										setShowCurrencies(false)
-									}}
-									activeOpacity={0.7}
+							<Text
+								size="xs"
+								variant="secondary"
+								weight="medium"
+								style={{ marginBottom: 10 }}
+							>
+								КОНВЕРТЕР КУРСА
+							</Text>
+
+							{/* Выбор валюты */}
+							<TouchableOpacity
+								onPress={() => setShowCalcCurrencies(v => !v)}
+								activeOpacity={0.7}
+								style={[
+									styles.calcCurrencyBtn,
+									{
+										backgroundColor: colors.bgElevated,
+										borderColor: colors.border
+									}
+								]}
+							>
+								<Text
+									size="sm"
+									weight="bold"
+								>
+									{CURRENCY_SYMBOLS[calcCurrency]} {calcCurrency}
+								</Text>
+								<Ionicons
+									name={showCalcCurrencies ? 'chevron-up' : 'chevron-down'}
+									size={14}
+									color={colors.textSecondary}
+								/>
+							</TouchableOpacity>
+
+							{/* Список валют калькулятора */}
+							{showCalcCurrencies && (
+								<View
 									style={[
-										styles.currencyItem,
+										styles.calcCurrencyList,
 										{
-											backgroundColor:
-												c === currency ? colors.accent + '22' : 'transparent',
-											borderBottomColor: colors.border
+											backgroundColor: colors.bgElevated,
+											borderColor: colors.border
 										}
 									]}
 								>
-									<Text
-										size="lg"
-										weight="bold"
-										style={{
-											width: 28,
-											color: c === currency ? colors.accent : colors.textPrimary
-										}}
+									{CURRENCIES.filter(c => c !== defaultCurrency).map(c => (
+										<TouchableOpacity
+											key={c}
+											onPress={() => {
+												setCalcCurrency(c)
+												setShowCalcCurrencies(false)
+											}}
+											activeOpacity={0.7}
+											style={[
+												styles.calcCurrencyItem,
+												{
+													backgroundColor:
+														c === calcCurrency
+															? colors.accent + '22'
+															: 'transparent',
+													borderBottomColor: colors.border
+												}
+											]}
+										>
+											<Text
+												size="sm"
+												weight="bold"
+												style={{
+													width: 24,
+													color:
+														c === calcCurrency
+															? colors.accent
+															: colors.textPrimary
+												}}
+											>
+												{CURRENCY_SYMBOLS[c]}
+											</Text>
+											<Text
+												size="sm"
+												style={{
+													color:
+														c === calcCurrency
+															? colors.accent
+															: colors.textSecondary
+												}}
+											>
+												{CURRENCY_LABELS[c]}
+											</Text>
+										</TouchableOpacity>
+									))}
+								</View>
+							)}
+
+							{/* Сумма в исходной валюте */}
+							<Input
+								label={`Сумма в ${calcCurrency}`}
+								value={calcAmount}
+								onChangeText={handleCalcAmountChange}
+								placeholder="0.00"
+								keyboardType="decimal-pad"
+								leftIcon="cash-outline"
+								style={{ marginTop: 10 }}
+							/>
+
+							{/* Операция × или ÷ */}
+							<View style={styles.calcOpRow}>
+								{(['divide', 'multiply'] as const).map(op => (
+									<TouchableOpacity
+										key={op}
+										onPress={() => setCalcOp(op)}
+										activeOpacity={0.7}
+										style={[
+											styles.calcOpBtn,
+											{
+												backgroundColor:
+													calcOp === op
+														? colors.accent + '22'
+														: colors.bgElevated,
+												borderColor:
+													calcOp === op ? colors.accent : colors.border
+											}
+										]}
 									>
-										{CURRENCY_SYMBOLS[c]}
-									</Text>
-									<Text
-										size="sm"
-										style={{
-											color:
-												c === currency ? colors.accent : colors.textSecondary
-										}}
-									>
-										{CURRENCY_LABELS[c]}
-									</Text>
-									{c === currency && (
-										<Ionicons
-											name="checkmark"
-											size={16}
-											color={colors.accent}
-											style={{ marginLeft: 'auto' }}
-										/>
-									)}
+										<Text
+											size="lg"
+											weight="bold"
+											style={{
+												color:
+													calcOp === op ? colors.accent : colors.textSecondary
+											}}
+										>
+											{op === 'multiply' ? '×' : '÷'}
+										</Text>
+									</TouchableOpacity>
+								))}
+							</View>
+
+							{/* Курс */}
+							<Input
+								label={`Курс (1 ${calcCurrency} = ? ${defaultCurrency})`}
+								value={calcRate}
+								onChangeText={handleCalcRateChange}
+								placeholder="0.00"
+								keyboardType="decimal-pad"
+								leftIcon="trending-up-outline"
+								style={{ marginTop: 10 }}
+							/>
+
+							{/* Результат */}
+							{calcResult !== null && (
+								<TouchableOpacity
+									onPress={applyCalcResult}
+									activeOpacity={0.8}
+									style={[
+										styles.calcResult,
+										{
+											backgroundColor: colors.accent + '22',
+											borderColor: colors.accent
+										}
+									]}
+								>
+									<View>
+										<Text
+											size="xs"
+											variant="secondary"
+											weight="medium"
+										>
+											РЕЗУЛЬТАТ — нажмите чтобы применить
+										</Text>
+										<Text
+											size="xl"
+											weight="bold"
+											style={{ color: colors.accent, marginTop: 2 }}
+										>
+											{CURRENCY_SYMBOLS[defaultCurrency]}
+											{calcResult.toLocaleString('ru-RU')}
+										</Text>
+									</View>
+									<Ionicons
+										name="checkmark-circle"
+										size={28}
+										color={colors.accent}
+									/>
 								</TouchableOpacity>
-							))}
+							)}
 						</View>
 					)}
 				</Card>
 
-				{/* ── Категории ────────────────────────────────────────────────── */}
+				{/* ── Категории ──────────────────────────────────────────────────── */}
 				<View>
 					<View style={styles.sectionHeader}>
 						<Text
@@ -339,8 +523,8 @@ export default function AddTransactionModal() {
 							КАТЕГОРИЯ
 						</Text>
 						<TouchableOpacity
-							activeOpacity={0.7}
 							onPress={() => router.push('/modals/add-category')}
+							activeOpacity={0.7}
 						>
 							<Text
 								size="sm"
@@ -395,7 +579,7 @@ export default function AddTransactionModal() {
 					</ScrollView>
 				</View>
 
-				{/* ── Дата ─────────────────────────────────────────────────────── */}
+				{/* ── Дата ───────────────────────────────────────────────────────── */}
 				<Card elevated>
 					<Text
 						size="xs"
@@ -405,28 +589,18 @@ export default function AddTransactionModal() {
 						ДАТА
 					</Text>
 					<View style={styles.dateRow}>
-						{/* Кнопка вчера */}
-						{['yesterday', 'today', 'custom'].map(d => {
+						{(['today', 'yesterday'] as const).map(d => {
 							const today = format(new Date(), 'yyyy-MM-dd')
 							const yesterday = format(
 								new Date(Date.now() - 86400000),
 								'yyyy-MM-dd'
 							)
-							const isToday = date === today
-							const isYesterday = date === yesterday
 							const isActive =
-								d === 'today'
-									? isToday
-									: d === 'yesterday'
-										? isYesterday
-										: !isToday && !isYesterday
+								d === 'today' ? date === today : date === yesterday
 							return (
 								<TouchableOpacity
 									key={d}
-									onPress={() => {
-										if (d === 'today') setDate(today)
-										if (d === 'yesterday') setDate(yesterday)
-									}}
+									onPress={() => setDate(d === 'today' ? today : yesterday)}
 									activeOpacity={0.7}
 									style={[
 										styles.dateBtn,
@@ -444,11 +618,7 @@ export default function AddTransactionModal() {
 											color: isActive ? colors.accent : colors.textSecondary
 										}}
 									>
-										{d === 'today'
-											? 'Сегодня'
-											: d === 'yesterday'
-												? 'Вчера'
-												: format(new Date(date), 'd MMM', { locale: ru })}
+										{d === 'today' ? 'Сегодня' : 'Вчера'}
 									</Text>
 								</TouchableOpacity>
 							)
@@ -456,7 +626,7 @@ export default function AddTransactionModal() {
 					</View>
 				</Card>
 
-				{/* ── Заметка ──────────────────────────────────────────────────── */}
+				{/* ── Заметка ────────────────────────────────────────────────────── */}
 				<Input
 					label="Заметка (необязательно)"
 					value={note}
@@ -466,7 +636,6 @@ export default function AddTransactionModal() {
 					maxLength={120}
 				/>
 
-				{/* ── Кнопка сохранить (внизу) ─────────────────────────────────── */}
 				<Button
 					label={type === 'expense' ? 'Добавить расход' : 'Добавить доход'}
 					onPress={handleSave}
@@ -480,9 +649,7 @@ export default function AddTransactionModal() {
 }
 
 const styles = StyleSheet.create({
-	root: {
-		flex: 1
-	},
+	root: { flex: 1 },
 	header: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -497,14 +664,8 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
-	scroll: {
-		padding: 16,
-		gap: 16
-	},
-	typeRow: {
-		flexDirection: 'row',
-		gap: 10
-	},
+	scroll: { padding: 16, gap: 16 },
+	typeRow: { flexDirection: 'row', gap: 10 },
 	typeBtn: {
 		flex: 1,
 		flexDirection: 'row',
@@ -514,34 +675,77 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		borderWidth: 1
 	},
-	amountCard: {
-		gap: 10
-	},
-	amountRow: {
-		flexDirection: 'row',
-		alignItems: 'center'
-	},
-	currencyBtn: {
+	amountHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		paddingHorizontal: 12,
+		justifyContent: 'space-between'
+	},
+	calcToggle: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 6,
+		borderWidth: 1
+	},
+	amountRow: { flexDirection: 'row', alignItems: 'center' },
+	currencyBadge: {
+		paddingHorizontal: 14,
 		height: 44,
+		borderRadius: 8,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	calcBox: {
+		borderRadius: 10,
+		borderWidth: 1,
+		padding: 14,
+		marginTop: 4
+	},
+	calcCurrencyBtn: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		paddingHorizontal: 12,
+		paddingVertical: 10,
 		borderRadius: 8,
 		borderWidth: 1
 	},
-	currencyList: {
+	calcCurrencyList: {
 		borderRadius: 8,
 		borderWidth: 1,
 		overflow: 'hidden',
-		marginTop: 4
+		marginTop: 6
 	},
-	currencyItem: {
+	calcCurrencyItem: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		paddingVertical: 12,
-		paddingHorizontal: 14,
+		paddingVertical: 10,
+		paddingHorizontal: 12,
 		borderBottomWidth: 1,
 		gap: 10
+	},
+	calcOpRow: {
+		flexDirection: 'row',
+		gap: 10,
+		marginTop: 10
+	},
+	calcOpBtn: {
+		flex: 1,
+		alignItems: 'center',
+		paddingVertical: 10,
+		borderRadius: 8,
+		borderWidth: 1
+	},
+	calcResult: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		borderRadius: 10,
+		borderWidth: 1,
+		padding: 14,
+		marginTop: 10
 	},
 	sectionHeader: {
 		flexDirection: 'row',
@@ -549,10 +753,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		marginBottom: 10
 	},
-	categoriesScroll: {
-		gap: 8,
-		paddingBottom: 4
-	},
+	categoriesScroll: { gap: 8, paddingBottom: 4 },
 	categoryChip: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -561,11 +762,7 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		borderWidth: 1
 	},
-	dateRow: {
-		flexDirection: 'row',
-		gap: 8,
-		marginTop: 8
-	},
+	dateRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
 	dateBtn: {
 		flex: 1,
 		alignItems: 'center',
